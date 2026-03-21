@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+
+    <!-- ── Identity ─────────────────────────────────────────────────────── -->
+    <key>CFBundleName</key>
+    <string>TutorCast</string>
+
+    <key>CFBundleDisplayName</key>
+    <string>TutorCast</string>
+
+    <!-- IMPORTANT: change the bundle ID to match your Apple Developer team.    -->
+    <!-- Format: com.<yourteam>.TutorCast                                        -->
+    <key>CFBundleIdentifier</key>
+    <string>com.yourteam.TutorCast</string>
+
+    <key>CFBundleVersion</key>
+    <string>1</string>
+
+    <key>CFBundleShortVersionString</key>
+    <string>1.0.0</string>
+
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+
+    <key>CFBundleExecutable</key>
+    <string>$(EXECUTABLE_NAME)</string>
+
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+
+    <!-- ── Platform ─────────────────────────────────────────────────────── -->
+    <!-- Minimum deployment target matches the Xcode project setting.           -->
+    <key>LSMinimumSystemVersion</key>
+    <string>14.0</string>
+
+    <!-- ── Menu-bar app (no Dock icon) ─────────────────────────────────── -->
+    <!-- LSUIElement = YES hides the app from the Dock and App Switcher.        -->
+    <!-- Combined with NSApp.setActivationPolicy(.accessory) in AppDelegate,    -->
+    <!-- this is the canonical way to ship a menu-bar-only macOS app.           -->
+    <key>LSUIElement</key>
+    <true/>
+
+    <!-- ── Input Monitoring ─────────────────────────────────────────────── -->
+    <!--
+    REQUIRED for CGEventTap at kCGSessionEventTap on macOS 10.15+.
+
+    What the key does:
+      macOS displays this string in:
+        System Settings → Privacy & Security → Input Monitoring → TutorCast
+      It must clearly explain WHY the app needs to monitor keyboard input.
+      Apple may reject App Store submissions whose description is vague.
+
+    Permission flow:
+      1. First-launch: CGEvent.tapCreate returns nil (permission not granted).
+      2. EventTapManager calls AXIsProcessTrustedWithOptions(prompt:true)
+         which opens the Accessibility dialog.
+      3. Input Monitoring is a separate TCC category — guide the user to:
+         System Settings → Privacy & Security → Input Monitoring → ✓ TutorCast
+      4. After granting, the user relaunches the app (or taps "Restart Event
+         Tap" in Settings) to activate the tap.
+
+    Distribution note:
+      • Direct distribution (outside App Store): No special entitlement needed;
+        the runtime TCC grant is sufficient.
+      • Mac App Store: Add the entitlement
+          com.apple.security.input-monitoring = YES
+        in the .entitlements file and explain the use case in App Review notes.
+    -->
+    <key>NSInputMonitoringUsageDescription</key>
+    <string>TutorCast reads keyboard shortcuts while you work in AutoCAD so it can display the command name in the screen-recording overlay. No keystrokes are stored or transmitted.</string>
+
+    <!-- ── Accessibility ─────────────────────────────────────────────────── -->
+    <!--
+    REQUIRED for AutoCADCommandMonitor to read native macOS AutoCAD's command line.
+
+    The NativeMacOSAutoCADReader uses AXUIElementCreateApplication and related
+    Accessibility APIs to:
+      1. Find the AutoCAD window hierarchy
+      2. Locate the command line window
+      3. Extract the command name and subcommand text
+
+    macOS enforces Accessibility permissions strictly (TCC):
+      System Settings → Privacy & Security → Accessibility → ✓ TutorCast
+
+    IMPORTANT: AXIsProcessTrustedWithOptions may prompt for this permission
+    (in addition to Input Monitoring) even though the event tap itself only
+    needs Input Monitoring. This is Apple's current behavior.
+
+    This string is displayed to the user in System Settings.
+    -->
+    <key>NSAccessibilityUsageDescription</key>
+    <string>TutorCast needs Accessibility permission to:
+1. Reliably capture keyboard events for the overlay
+2. Read AutoCAD's active command and subcommand directly from the command line window (macOS only)
+
+This allows TutorCast to display the exact command context (e.g., LINE, OFFSET) with current prompts (e.g., "Specify first point:") without guessing from keyboard input.</string>
+
+    <!-- ── App category (for Spotlight / App Store) ─────────────────────── -->
+    <key>LSApplicationCategoryType</key>
+    <string>public.app-category.productivity</string>
+
+</dict>
+</plist>

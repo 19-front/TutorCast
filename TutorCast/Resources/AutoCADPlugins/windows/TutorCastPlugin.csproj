@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+  <PropertyGroup>
+    <TargetFramework>net48</TargetFramework>
+    <OutputType>Library</OutputType>
+    <AssemblyName>TutorCastPlugin</AssemblyName>
+    <RootNamespace>TutorCast</RootNamespace>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <Optimize>true</Optimize>
+    <DebugType>none</DebugType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- AutoCAD API References
+         Note: Update paths to match your AutoCAD 2024 installation directory.
+         Set CopyLocal to false since AutoCAD provides these DLLs at runtime. -->
+    
+    <Reference Include="acdbmgd">
+      <HintPath>C:\Program Files\Autodesk\AutoCAD 2024\acdbmgd.dll</HintPath>
+      <Private>false</Private>
+      <SpecificVersion>false</SpecificVersion>
+    </Reference>
+
+    <Reference Include="acmgd">
+      <HintPath>C:\Program Files\Autodesk\AutoCAD 2024\acmgd.dll</HintPath>
+      <Private>false</Private>
+      <SpecificVersion>false</SpecificVersion>
+    </Reference>
+
+    <Reference Include="AcCoreMgd">
+      <HintPath>C:\Program Files\Autodesk\AutoCAD 2024\AcCoreMgd.dll</HintPath>
+      <Private>false</Private>
+      <SpecificVersion>false</SpecificVersion>
+    </Reference>
+
+    <Reference Include="acdbmgd">
+      <HintPath>C:\Program Files\Autodesk\AutoCAD 2024\acdbmgd.dll</HintPath>
+      <Private>false</Private>
+      <SpecificVersion>false</SpecificVersion>
+    </Reference>
+
+    <!-- Standard .NET Framework assemblies (included by .NET SDK) -->
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.IO" />
+    <Reference Include="System.Net.Sockets" />
+    <Reference Include="System.Text.Json" />
+    <Reference Include="System.Threading" />
+  </ItemGroup>
+
+  <!-- Post-build: Copy DLL to target folder for manual testing -->
+  <Target Name="PostBuild" AfterTargets="Build">
+    <Message Text="Post-build: Built TutorCastPlugin.dll" Importance="high" />
+    <Copy
+      SourceFiles="$(TargetPath)"
+      DestinationFolder="$(ProjectDir)\..\..\..\Resources\AutoCADPlugins\windows"
+      SkipUnchangedFiles="true"
+    />
+  </Target>
+
+</Project>

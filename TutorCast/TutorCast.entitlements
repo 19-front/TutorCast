@@ -1,0 +1,84 @@
+<!--
+  TutorCast.entitlements
+  TutorCast
+
+  For App Store builds:
+    1. Sandboxing enabled: com.apple.security.app-sandbox = YES
+    2. Input Monitoring entitlement: com.apple.security.input-monitoring = YES
+    3. Accessibility permission documented
+
+  For direct distribution (notarised, not App Store):
+    - Sandboxing remains optional but recommended
+    - Hardened runtime is required for notarization
+
+  SECURITY IMPROVEMENTS:
+    • Enabled hardened runtime with strict exploit mitigations
+    • Disabled JIT compilation for reduced attack surface
+    • Disabled unsigned executable memory to prevent code injection
+    • Disabled library validation bypass to enforce code signing verification
+
+  NOTE: Uncomment sandbox keys below for Mac App Store submission.
+-->
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+
+    <!-- Hardened Runtime — required for Notarisation and security. -->
+    <!-- These settings reduce the attack surface by disabling unsafe features -->
+    <key>com.apple.security.cs.allow-jit</key>
+    <false/>
+
+    <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
+    <false/>
+
+    <key>com.apple.security.cs.disable-library-validation</key>
+    <false/>
+    
+    <!-- Additional hardened runtime protections -->
+    <key>com.apple.security.cs.allow-dyld-environment-variables</key>
+    <false/>
+    
+    <!-- Prevent debugging of the app to protect against process injection -->
+    <key>com.apple.security.debug</key>
+    <false/>
+
+    <!-- Sandbox - Uncomment for App Store submission -->
+    <!--
+    <key>com.apple.security.app-sandbox</key>
+    <true/>
+    -->
+    
+    <!-- If sandboxing is enabled, restrict network and file access -->
+    <!--
+    <key>com.apple.security.network.client</key>
+    <true/>
+    
+    <key>com.apple.security.files.user-selected.read-write</key>
+    <true/>
+    -->
+
+    <!-- Input Monitoring - Required for keyboard event capture -->
+    <!-- Uncomment for App Store submission -->
+    <!--
+    <key>com.apple.security.input-monitoring</key>
+    <true/>
+    -->
+
+    <!-- Accessibility - Required for reading AutoCAD's accessibility elements (native macOS) -->
+    <!-- This allows TutorCast to query AutoCAD's window hierarchy and read command line text -->
+    <key>com.apple.security.automation.enabled</key>
+    <true/>
+
+    <!-- Temporary Items - Allow writing recorded sessions with restricted scope -->
+    <!--
+    <key>com.apple.security.files.downloads.read-write</key>
+    <true/>
+
+    <key>com.apple.security.files.user-selected.read-write</key>
+    <true/>
+    -->
+
+</dict>
+</plist>
