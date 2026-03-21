@@ -70,7 +70,7 @@ final class NativeMacOSAutoCADReader: NSObject, AutoCADReader {
     }
     
     func readCommandState() async throws -> AutoCADCommandState {
-        guard let autoCADApp, autoCADApp.isRunning else {
+        guard let autoCADApp, !autoCADApp.isTerminated else {
             throw AutoCADReaderError.autoCADNotRunning
         }
         
@@ -311,7 +311,7 @@ final class NativeMacOSAutoCADReader: NSObject, AutoCADReader {
                 commandName = cleanedLine
                 // Next line(s) are likely subcommands
                 if index + 1 < lines.count {
-                    subcommandText = lines[index + 1...].joined(separator: " ")
+                    subcommandText = lines[(index + 1)..<lines.count].joined(separator: " ")
                 }
                 break
             } else if commandName.isEmpty {

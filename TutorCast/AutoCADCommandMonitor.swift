@@ -63,6 +63,7 @@ final class AutoCADCommandMonitor: ObservableObject {
     }
     
     /// Stop monitoring
+    @MainActor
     func stop() {
         print("[AutoCADCommandMonitor] Stopping command monitor...")
         monitoringTimer?.invalidate()
@@ -77,7 +78,7 @@ final class AutoCADCommandMonitor: ObservableObject {
     private func detectAndStartMonitoring() async {
         // Try native AutoCAD first
         if await nativeReader?.isAutoCADRunning() ?? false {
-            detectedEnvironment = .nativeMacOS
+            detectedEnvironment = .nativeMac(version: nil)
             print("[AutoCADCommandMonitor] ✅ Detected native macOS AutoCAD")
             startNativeMonitoring()
             return
@@ -85,14 +86,14 @@ final class AutoCADCommandMonitor: ObservableObject {
         
         // Try Parallels AutoCAD
         if await parallelsReader?.isAutoCADRunning() ?? false {
-            detectedEnvironment = .parallelsWindows
+            detectedEnvironment = .parallelsWindows(vmIP: "unknown")
             print("[AutoCADCommandMonitor] ✅ Detected AutoCAD in Parallels Desktop")
             startParallelsMonitoring()
             return
         }
         
         // No AutoCAD detected
-        detectedEnvironment = .unknown
+        detectedEnvironment = .notRunning
         print("[AutoCADCommandMonitor] ⚠️  No AutoCAD detected. Falling back to keyboard-only mode.")
         isMonitoring = false
     }
@@ -154,18 +155,13 @@ final class AutoCADCommandMonitor: ObservableObject {
     }
     
     deinit {
-        stop()
+        Task {
+            await stop()
+        }
     }
 }
 
 // MARK: - Supporting Types
-
-/// Represents the detected AutoCAD environment
-enum AutoCADEnvironment: Equatable {
-    case nativeMacOS
-    case parallelsWindows
-    case unknown
-}
 
 /// The command state read from AutoCAD at a given moment
 struct AutoCADCommandState {

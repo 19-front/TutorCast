@@ -118,7 +118,7 @@ final class LabelEngine: ObservableObject {
     
     /// Process an AutoCADCommandEvent from either native or Parallels plugin
     /// This is the highest-priority input channel, suppressing keyboard events
-    private func processCommandEvent(_ event: AutoCADCommandEvent) {
+    func processCommandEvent(_ event: AutoCADCommandEvent) {
         lastEventTime = Date()
         lastDirectEventTime = Date()
         commandEventTimer?.invalidate()
@@ -331,8 +331,43 @@ final class LabelEngine: ObservableObject {
         }
     }
 
-    /// Invalidate timer on deinit to avoid leaks
+    /// Schedule clearing of the label after a specific duration
+    private func scheduleCommandEventClear(duration: TimeInterval) {
+        commandEventTimer?.invalidate()
+        commandEventTimer = Timer.scheduledTimer(withTimeInterval: duration, repeats: false) { [weak self] _ in
+            DispatchQueue.main.async {
+                self?.currentLabel = "Ready"
+                self?.colorCategory = .default
+                self?.secondaryLabel = ""
+            }
+        }
+    }
+
+    /// Update label display based on current command and subcommand state
+    private func updateIsShowingCommand() {
+        // If we have a current command or subcommand text, keep the display
+        if !commandName.isEmpty || !subcommandText.isEmpty {
+            // Label is already set from subscriptions, just maintain it
+            if commandEventTimer?.isValid != true && displayTimer?.isValid != true {
+                // If no active timers, schedule auto-clear based on command type
+                if subcommandText.isEmpty {
+                    scheduleAutoClear()
+                } else {
+                    scheduleCommandEventClear(duration: 2.0)
+                }
+            }
+        } else {
+            // Clear if command/subcommand becomes empty
+            currentLabel = "Ready"
+            colorCategory = .default
+            commandEventTimer?.invalidate()
+            displayTimer?.invalidate()
+        }
+    }
+
+    /// Invalidate timers on deinit to avoid leaks
     deinit {
         displayTimer?.invalidate()
+        commandEventTimer?.invalidate()
     }
 }

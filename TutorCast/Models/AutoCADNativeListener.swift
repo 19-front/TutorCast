@@ -8,7 +8,7 @@ import Foundation
 import Darwin
 
 @MainActor
-final class AutoCADNativeListener: ObservableObject {
+final class AutoCADNativeListener {
     static let shared = AutoCADNativeListener()
     
     /// Unix domain socket path for Python plugin communication

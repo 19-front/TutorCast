@@ -299,7 +299,7 @@ final class AutoCADEnvironmentDetector: ObservableObject {
             await self.checkPortOpen(ip: ip, port: self.autocadWindowsPort)
         }
         
-        if result {
+        if let isOpen = result, isOpen {
             return ip
         }
         return nil
@@ -357,16 +357,16 @@ final class AutoCADEnvironmentDetector: ObservableObject {
                 if errno == EINPROGRESS {
                     // Wait for completion with timeout
                     var timeout = timeval()
-                    timeout.tv_sec = 0
-                    timeout.tv_usec = Int(self.tcpTimeout * 1_000_000)  // Convert to microseconds
+                    timeout.tv_sec = Int(self.tcpTimeout)
+                    timeout.tv_usec = Int32((self.tcpTimeout - Double(timeout.tv_sec)) * 1_000_000)
                     
+                    // Use simple polling without FD_* macros
                     var writefds = fd_set()
-                    FD_ZERO(&writefds)
-                    FD_SET(socketfd, &writefds)
+                    memset(&writefds, 0, MemoryLayout<fd_set>.size)
                     
                     let selectResult = select(socketfd + 1, nil, &writefds, nil, &timeout)
                     
-                    if selectResult > 0 && FD_ISSET(socketfd, &writefds) {
+                    if selectResult > 0 {
                         // Check connection status
                         var optval: Int32 = 0
                         var optlen = socklen_t(MemoryLayout<Int32>.size)
@@ -385,23 +385,21 @@ final class AutoCADEnvironmentDetector: ObservableObject {
     
     /// Execute a task with timeout
     private func withTimeoutSeconds<T>(_ seconds: TimeInterval, operation: @escaping () async -> T) async -> T? {
-        return await withTaskGroup(of: T?.self) { group in
-            let task = group.addTaskUnstructured {
-                await operation()
+        let resultTask = Task {
+            await operation()
+        }
+        
+        // Sleep for timeout duration
+        do {
+            try await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
+            // Timeout occurred
+            resultTask.cancel()
+            return nil
+        } catch {
+            // Task was cancelled, return result if available
+            if !resultTask.isCancelled {
+                return await resultTask.value
             }
-            
-            group.addTaskUnstructured {
-                try? await Task.sleep(nanoseconds: UInt64(seconds * 1_000_000_000))
-                task.cancel()
-                return nil
-            }
-            
-            for await result in group {
-                if let value = result {
-                    return value
-                }
-            }
-            
             return nil
         }
     }
@@ -444,7 +442,7 @@ final class AutoCADEnvironmentDetector: ObservableObject {
     }
     
     deinit {
-        stopDetection()
+        detectionTimer?.invalidate()
         if let observer = workspaceObserver {
             NSWorkspace.shared.notificationCenter.removeObserver(observer)
         }

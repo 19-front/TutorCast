@@ -11,7 +11,7 @@ import Foundation
 import Network
 
 @MainActor
-final class AutoCADParallelsListener: ObservableObject {
+final class AutoCADParallelsListener {
     static let shared = AutoCADParallelsListener()
     
     /// TCP port for Windows plugin connections
@@ -58,8 +58,8 @@ final class AutoCADParallelsListener: ObservableObject {
         let params = NWParameters.tcp
         params.allowLocalEndpointReuse = true
         
-        // Disable encryption (local network only)
-        params.defaultProtocolStack.mediaAccess = .disable
+        // Note: mediaAccess property not available in current Swift version
+        // Server will bind to specified port only
         
         do {
             guard let port = NWEndpoint.Port(rawValue: self.port) else {
@@ -70,7 +70,9 @@ final class AutoCADParallelsListener: ObservableObject {
             listener = try NWListener(using: params, on: port)
             
             listener?.newConnectionHandler = { [weak self] connection in
-                self?.handleNewConnection(connection)
+                Task { @MainActor [weak self] in
+                    self?.handleNewConnection(connection)
+                }
             }
             
             listener?.stateUpdateHandler = { [weak self] state in
@@ -97,17 +99,21 @@ final class AutoCADParallelsListener: ObservableObject {
         connections.append(connection)
         
         connection.stateUpdateHandler = { [weak self] state in
-            switch state {
-            case .ready:
-                print("[AutoCADParallelsListener] Connection established")
-                self?.receiveData(from: connection, buffer: "")
-            case .failed(let error):
-                print("[AutoCADParallelsListener] Connection failed: \(error)")
-                self?.connections.removeAll { $0 === connection }
-            case .cancelled:
-                self?.connections.removeAll { $0 === connection }
-            default:
-                break
+            Task { @MainActor [weak self] in
+                guard let self = self else { return }
+                
+                switch state {
+                case .ready:
+                    print("[AutoCADParallelsListener] Connection established")
+                    self.receiveData(from: connection, buffer: "")
+                case .failed(let error):
+                    print("[AutoCADParallelsListener] Connection failed: \(error)")
+                    self.connections.removeAll { $0 === connection }
+                case .cancelled:
+                    self.connections.removeAll { $0 === connection }
+                default:
+                    break
+                }
             }
         }
         
@@ -116,32 +122,34 @@ final class AutoCADParallelsListener: ObservableObject {
     
     private func receiveData(from connection: NWConnection, buffer: String) {
         connection.receive(minimumIncompleteLength: 1, maximumLength: 65536) { [weak self] data, context, isComplete, error in
-            guard let self = self else { return }
-            
-            if let data = data, !data.isEmpty {
-                if let chunk = String(data: data, encoding: .utf8) {
-                    var accumulated = buffer + chunk
-                    
-                    // Parse newline-delimited JSON
-                    while let newlineRange = accumulated.range(of: "\n") {
-                        let line = String(accumulated[accumulated.startIndex..<newlineRange.lowerBound])
-                        accumulated.removeFirst(accumulated.distance(from: accumulated.startIndex, to: newlineRange.upperBound))
+            Task { @MainActor [weak self] in
+                guard let self = self else { return }
+                
+                if let data = data, !data.isEmpty {
+                    if let chunk = String(data: data, encoding: .utf8) {
+                        var accumulated = buffer + chunk
                         
-                        if !line.trimmingCharacters(in: .whitespaces).isEmpty {
-                            self.parseAndDispatch(line)
+                        // Parse newline-delimited JSON
+                        while let newlineRange = accumulated.range(of: "\n") {
+                            let line = String(accumulated[accumulated.startIndex..<newlineRange.lowerBound])
+                            accumulated.removeFirst(accumulated.distance(from: accumulated.startIndex, to: newlineRange.upperBound))
+                            
+                            if !line.trimmingCharacters(in: .whitespaces).isEmpty {
+                                self.parseAndDispatch(line)
+                            }
+                        }
+                        
+                        // Continue receiving if not complete
+                        if !isComplete {
+                            self.receiveData(from: connection, buffer: accumulated)
                         }
                     }
-                    
-                    // Continue receiving if not complete
-                    if !isComplete {
-                        self.receiveData(from: connection, buffer: accumulated)
-                    }
                 }
-            }
-            
-            if isComplete || error != nil {
-                self.connections.removeAll { $0 === connection }
-                print("[AutoCADParallelsListener] Connection closed")
+                
+                if isComplete || error != nil {
+                    self.connections.removeAll { $0 === connection }
+                    print("[AutoCADParallelsListener] Connection closed")
+                }
             }
         }
     }

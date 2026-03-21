@@ -26,6 +26,7 @@
 //   • Restrict to user processes only
 
 import Foundation
+import AppKit
 
 @MainActor
 final class ParallelsWindowsAutoCADReader: NSObject, AutoCADReader {
