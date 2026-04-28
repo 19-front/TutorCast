@@ -82,8 +82,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
         // This creates a TCP server on port 19848 to receive events from
         // the Windows AutoCAD plugin running in Parallels VM.
         // TCP binding restricted to 127.0.0.1 and Parallels network ranges.
-        print("[TutorCast] Starting AutoCAD Parallels Listener...")
+        NSLog("[TutorCast] PARALLELS LISTENER: Starting...")
+        NSLog("[TutorCast] PARALLELS LISTENER: Calling start()...")
         AutoCADParallelsListener.shared.start()
+        NSLog("[TutorCast] PARALLELS LISTENER: start() returned")
         AutoCADParallelsListener.shared.onEvent = { [weak self] event in
             // Validate command data before processing
             if let validated = SecurityValidator.shared.validateCommandData(

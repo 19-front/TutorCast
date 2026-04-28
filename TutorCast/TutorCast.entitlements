@@ -44,27 +44,31 @@
     <key>com.apple.security.debug</key>
     <false/>
 
-    <!-- Sandbox - Uncomment for App Store submission -->
+    <!-- Sandbox - DISABLED for development (development builds don't run sandboxed) -->
+    <!-- For App Store submission, this should be enabled -->
     <!--
     <key>com.apple.security.app-sandbox</key>
     <true/>
     -->
     
-    <!-- If sandboxing is enabled, restrict network and file access -->
-    <!--
+    <!-- Network Access - REQUIRED for Parallels plugin connection (TCP port 19848) -->
+    <key>com.apple.security.network.server</key>
+    <true/>
+    
     <key>com.apple.security.network.client</key>
     <true/>
     
+    <!-- Allow incoming network connections (for TCP server on port 19848) -->
+    <key>com.apple.security.network.bind-local</key>
+    <true/>
+    
+    <!-- File Access for Event Monitoring (fallback shared folder) -->
     <key>com.apple.security.files.user-selected.read-write</key>
     <true/>
-    -->
 
-    <!-- Input Monitoring - Required for keyboard event capture -->
-    <!-- Uncomment for App Store submission -->
-    <!--
+    <!-- Input Monitoring - REQUIRED for keyboard event capture -->
     <key>com.apple.security.input-monitoring</key>
     <true/>
-    -->
 
     <!-- Accessibility - Required for reading AutoCAD's accessibility elements (native macOS) -->
     <!-- This allows TutorCast to query AutoCAD's window hierarchy and read command line text -->
